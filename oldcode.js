@@ -1,7 +1,7 @@
 // --- КОДЫН ЭХЛЭЛ ---
 /****************************************************************************************
  * PRODUCT: LOVE NUMEROLOGY REPORT GENERATOR (ZAYANII HANI - 1 PERSON)
- * VERSION: v26.3 - UChat Only (Robust Core Engine, Deep 12-Page Storytelling, S+O+V Native)
+ * VERSION: v26.4 - UChat Only (Robust Core Engine, Auto-Retry Fixed, Strict Fallback & Safety)
  * AUTHOR: Jules + Codex
  * MODEL: gemini-2.5-flash
  * PERSONA: 50-year-old mystical Mongolian shaman woman, old Mongolian words ONLY.
@@ -9,7 +9,7 @@
 
 const CONFIG = {
   // --- SYSTEM CONFIGURATION ---
-  VERSION: "v26.3-Zayanii-Hani-Shaman-Deep",
+  VERSION: "v26.4-Zayanii-Hani-Strict-Core",
   PRODUCT_NAME: "Заяаны Ханийн Зурхай: Далд Увдис",
   SHEET_NAME: "Sheet1",
   BATCH_SIZE: 3,
