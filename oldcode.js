@@ -687,6 +687,13 @@ function generateSequentialReport(data, apiKey) {
       throw new Error("AI тайлан дотор орлуулагч (Placeholder) текст үлдээсэн байна.");
   }
 
+  // P2 FIX: LLMs sometimes return finishReason 'STOP' but still chop off the last sentence mid-word.
+  // Validate that the report physically ends with a valid sentence punctuation.
+  const lastChar = fullText.slice(-1);
+  if (![".", "!", "?", "»", "\"", "'", "”"].includes(lastChar)) {
+      throw new Error("AI тайлангийн төгсгөлийн өгүүлбэр дутуу тасарсан байна. Дахин оролдоно уу.");
+  }
+
   return {
     text: fullText,
     usage: (r1.usage||0) + (r2.usage||0) + (r3.usage||0) + (r4.usage||0) + (r5.usage||0)
