@@ -706,7 +706,9 @@ function createPdfSafely(name, content, templateId, folderId) {
     textAttributes = textElement.getAttributes();
     const paragraphToReplace = element.getParent();
     insertionIndex = body.getChildIndex(paragraphToReplace);
-    paragraphToReplace.removeFromParent();
+    // Google Docs does not allow removing the last paragraph in a section.
+    // Instead of removing the parent entirely right now, clear its text.
+    paragraphToReplace.asText().setText("");
   } else {
     insertionIndex = body.getNumChildren() - 1;
   }
