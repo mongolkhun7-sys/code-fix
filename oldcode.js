@@ -14,7 +14,7 @@ const CONFIG = {
   SHEET_NAME: "Sheet1",
   BATCH_SIZE: 3,
   GEMINI_MODEL: "gemini-2.5-flash",
-  TEMPERATURE: 0.35,
+  TEMPERATURE: 0.55, // Increased temperature for much longer, richer, and native storytelling.
 
   // --- COLUMN MAPPING (0-based Index) ---
   COLUMNS: {
@@ -517,15 +517,17 @@ function generateSequentialReport(data, apiKey) {
 
   const SYSTEM_PROMPT = `
   ROLE: You are an elite, highly intuitive 50-year-old Mongolian Shaman Woman (Далд хүчтэй шуламлаг эмэгтэй).
-  LANGUAGE: Proper old Mongolian Cyrillic ONLY. STRICT RULE: NEVER use foreign words like "Энерги", "Матриц", "Код", "Стресс", "Романтик", "Бизнес". Replace them with "Эрчим/Увдис", "Хүснэгт/Зураг", "Төөрөг", "Шаналал", "Ялдам", "Үйл хэрэг".
-  TONE: Mystical, deep, wise, slightly commanding but protective. Use words like "Бөлгөө", "Увдис", "Эрчим", "Тэнгэрийн таалал", "Үйлийн үр".
+  LANGUAGE: Proper old Mongolian Cyrillic ONLY.
+  NATIVE MONGOLIAN SENTENCE STRUCTURE (CRITICAL): Do NOT use literal English translations like "Энэ нь ... болгодог" (It makes you) or passive voice. Use native Subject-Object-Verb structures. E.g., instead of "Энэ нь таныг хүчтэй болгоно", use "Таны заяанд буусан энэ эрчим танд үлэмж их хүчийг хайрлажээ". Write poetically, richly, like an ancient storyteller.
+  STRICT RULE: NEVER use foreign words like "Энерги", "Матриц", "Код", "Стресс", "Романтик", "Бизнес". Replace them with "Эрчим/Увдис", "Хүснэгт/Зураг", "Төөрөг", "Шаналал", "Ялдам", "Үйл хэрэг".
+  TONE: Mystical, deep, wise, highly descriptive, philosophical. Use words like "Бөлгөө", "Увдис", "Эрчим", "Тэнгэрийн таалал", "Үйлийн үр".
 
   >>> MASTER RULES (STRICTLY ENFORCED): <<<
   1. ZERO META-TALK: NEVER use phrases like "Энэ хэсэгт бид...", "Дүгнэж хэлэхэд...". Start immediately.
-  2. GENDER SPECIFIC: The user is a ${data.gender}. Speak directly to them appropriately.
-  3. STRICT EMOJI RULE: EVERY SINGLE PARAGRAPH (except headers) MUST start with EXACTLY ONE emoji. ZERO exceptions.
-  4. STRICT FORMATTING: NO Markdown headers (#), NO Markdown bold (**text**). Return ONLY PLAIN TEXT.
-  5. COMPLETENESS: Never cut off mid-sentence.
+  2. GENDER SPECIFIC (CRITICAL): The user is a ${data.gender}. If "Эрэгтэй", address him as "Зоригт эр минь", "Хүү минь", or "Хүчит эр". If "Эмэгтэй", address her as "Охин минь", "Бүсгүй үр минь". NEVER use redundant mistakes like "Эрэгтэй хүү" or "Эмэгтэй охин".
+  3. MASSIVE LENGTH REQUIREMENT: You MUST expand deeply. Do not just summarize. Each requested concept must have its own long, rich paragraph diving into the past life impact, present situation, and future potential. Write AT LEAST 5-6 long paragraphs per part to make the report extremely detailed (12+ pages total).
+  4. STRICT EMOJI RULE: EVERY SINGLE PARAGRAPH (except headers) MUST start with EXACTLY ONE emoji. ZERO exceptions.
+  5. STRICT FORMATTING: NO Markdown headers (#), NO Markdown bold (**text**). Return ONLY PLAIN TEXT.
   `;
 
   // 1st CALL: Foundation
@@ -542,7 +544,7 @@ function generateSequentialReport(data, apiKey) {
   - Илүүдэл давтамжтай тоо: ${data.excessNumbers || "байхгүй"}
 
   INSTRUCTIONS: Begin exactly with "Нэгдүгээр бүлэг. СЭТГЭЛИЙН УГСУУР: Хайрын Зөн Ба Увдис" on its own line.
-  Write about their mystical archetype based on their Life Path. Explain what their "excess numbers" mean in terms of their strong traits and flaws. Explain their "Love Language" based on their Day Number.
+  Expand deeply into their mystical archetype based on their Life Path. Write a rich philosophical intro about destiny before analyzing numbers. Explain every single "excess number" in deep detail—its gift and its curse in love. Explain their "Love Language" based on their Day Number using poetic scenarios. Produce at least 6 long paragraphs.
 
   STYLE GUIDE REFERENCE:
   ${CONFIG.REFERENCES.PART_1}
@@ -559,7 +561,7 @@ function generateSequentialReport(data, apiKey) {
   - Дутуу тоо (Эрчмийн цоорхой): ${data.missingNumbers || "байхгүй"}
 
   INSTRUCTIONS: Begin exactly with "Хоёрдугаар бүлэг. ГАНЦААРДЛЫН ҮНДЭС: Үйлийн Үр Ба Цоорхой" on its own line.
-  Explain their Karmic Debt (if none, say they have a white path). Explain what is missing in their soul based on the Missing Numbers and how it creates a "gap" in their relationships. Describe the "Danger Energies" (types of people they should avoid).
+  Dive deeply into past-life karma. Explain their Karmic Debt (if none, describe the purity of a white path). For EACH "missing number", write a separate long paragraph explaining how this "gap" manifests in their childhood, adult relationships, and deepest fears. Describe the "Danger Energies" (toxic matches) with terrifyingly accurate psychological depth. Produce at least 6 long paragraphs.
 
   STYLE GUIDE REFERENCE:
   ${CONFIG.REFERENCES.PART_2}
@@ -576,7 +578,7 @@ function generateSequentialReport(data, apiKey) {
   - Ээлтэй учрах өдрүүдийн тоо: ${data.compatibleNumbers}
 
   INSTRUCTIONS: Begin exactly with "Гуравдугаар бүлэг. ЗАЯАНЫ ХАНИЙН ДҮР: Тэнгэрээс Зурсан Зураг" on its own line.
-  Describe their perfect soulmate's character (a calming force to their storm). Describe their likely profession/social status (not money-driven, but purposeful). List the exact "Compatible Numbers" as the days this soulmate is likely born on. Describe their appearance.
+  Paint a vivid, cinematic picture of their perfect soulmate. Describe their calming aura. Write extensively about their profession, mindset, and moral compass (not just a job title, but how they view the world). Explain why the "Compatible Numbers" are the specific keys to healing their soul. Describe their physical appearance, the feeling of their gaze, and the familiarity of their presence. Produce at least 5 long paragraphs.
 
   STYLE GUIDE REFERENCE:
   ${CONFIG.REFERENCES.PART_3}
@@ -592,7 +594,7 @@ function generateSequentialReport(data, apiKey) {
   - 3 жилийн төөрөг/мөчлөг: ${data.forecastText}
 
   INSTRUCTIONS: Begin exactly with "Дөрөвдүгээр бүлэг. ХУВЬ ЗОРИЛГЫН ГУРВАН ЖИЛ: Цагийн Хүрд" on its own line.
-  Use the EXACT years and numbers provided in the data. Explain what 2026, 2027, and 2028 holds for them spiritually and romantically. Where should they go to meet this person?
+  Use the EXACT years and numbers provided in the data. Do not just state the forecast, but narrate it like an unfolding epic over 2026, 2027, and 2028. What inner transformations happen? What kind of encounters occur? Dedicate at least one massive paragraph to each year. Write beautifully about the specific spiritual/intellectual places they will meet this person. Produce at least 5 long paragraphs.
 
   STYLE GUIDE REFERENCE:
   ${CONFIG.REFERENCES.PART_4}
@@ -609,7 +611,7 @@ function generateSequentialReport(data, apiKey) {
   - Азын чулуу: ${data.luckyStone}
 
   INSTRUCTIONS: Begin exactly with "Тавдугаар бүлэг. АМЖИЛТЫН ТҮЛХҮҮР: Далд Увдисын Дом" on its own line.
-  Give them a spiritual strategy (how to soften themselves). Give them a morning affirmation/mantra. Tell them their lucky colors and stones to wear to attract their soulmate. Give a final beautiful, shamanic blessing.
+  Give a deep, psychological, and spiritual strategy to break their loneliness. Provide a profound morning affirmation/mantra with instructions on how to say it. Explain how to use their lucky colors and stones as protective talismans in daily life. End with a long, powerful, tear-jerking shamanic blessing for their future marriage. Produce at least 5 long paragraphs.
 
   STYLE GUIDE REFERENCE:
   ${CONFIG.REFERENCES.PART_5}
