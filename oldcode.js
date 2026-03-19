@@ -51,9 +51,9 @@ const CONFIG = {
 
     PART_2: `Хоёрдугаар бүлэг. ГАНЦААРДЛЫН ҮНДЭС: Үйлийн Үр Ба Цоорхой
 🚧 Үйлийн үрийн өр
-Таны мөрөнд [КАРМЫН_ӨР] хэмээх хүнд үйлийн үрийн тоо гарсангүй нь Цагаан мөртэй явааг тань илтгэнэ. Танд өнгөрсөн наснаас тээж ирсэн хайрын хар нүгэл үгүй тул одоогийн ганцаардал тань зөвхөн таны өөрийн сонголт бөлгөө.
+Таны мөрөнд [КАРМЫН_ӨРИЙН_ДҮН] хэмээх хүнд үйлийн үрийн тоо гарсан нь [ҮЙЛИЙН_ҮРИЙН_ТАЙЛБАР] болохыг илтгэнэ. (Хэрэв өргүй бол цагаан мөртэйг дурдах).
 🕳️ Эрчмийн цоорхой
-Таны хүснэгтэд [ДУТУУ_ТООНУУД] дутаж байна. [ДУТУУ_ТОО_1] дутсан нь таныг өөрийгөө умартан бусдыг хэт халамжлах эсвэл өөрийгөө дорд үзэх байдалд хүргэнэ.
+Таны хүснэгтэд [ДУТУУ_ТООНУУД] дутаж байна. [ДУТУУ_ТОО_1] дутсан нь таныг харилцаанд [ДУТУУ_ТООНЫ_АЮУЛ] байдалд хүргэнэ.
 🔒 Сэтгэлийн чөдөр
 Таны [АМЬДРАЛЫН_ЗАМЫН_ТОО]-ийн увдис болон бусад эрчим нийлж, ирээдүйн ханиа хэт өндөр шалгуураар хэмжих чөдрийг үүсгэжээ.
 ⚠️ Сэрэмжлэх Эрчим
@@ -81,14 +81,13 @@ const CONFIG = {
 
     PART_5: `Тавдугаар бүлэг. АМЖИЛТЫН ТҮЛХҮҮР: Далд Увдисын Дом
 🔑 Зөөлрөхүйн ухаан
-Та өөрийн 1111 буюу хүчирхэг удирдагч чанараа номхотгож, харилцаанд зөөлөн ус мэт байх ухаанд суралц. Хэт их бодлоо тархинаасаа чөлөөлж бясалгал үйлдэх нь таны сэтгэлийг амирлуулах болно.
+Та өөрийн [ИЛҮҮДЭЛ_ТООНЫ_АЧААЛАЛ] чанараа номхотгож, харилцаанд зөөлөн ус мэт байх ухаанд суралц.
 🧘 Өглөөний тарни
-"Би өнгөрсний гомдлыг салхинд хийсгэлээ, одоо шинэ хайрыг тосож авахад бэлэн."
-"Би хайрлагдах эрхтэй, халамжлуулахын тулд зөөлөн байхыг өөртөө зөвшөөрч байна."
+"Би өнгөрсний гомдлыг салхинд хийсгэлээ, одоо шинэ хайрыг тосож авахад бэлэн. Би хайрлагдах эрхтэй."
 🎨 Ээлтэй өнгө ба чулуу
-Таны далд увдисыг хамгаалах өнгө бол "Мөнгөлөг цагаан", "Усан цэнхэр", "Нил ягаан". Азын чулуу тань "Сарны чулуу", "Аметист" бөгөөд эдгээр нь таны эрчмийг цэвэрлэж, нойрыг тань амраана.
+Таны далд увдисыг хамгаалах өнгө бол [АЗЫН_ӨНГӨ]. Азын чулуу тань [АЗЫН_ЧУЛУУ] бөгөөд эдгээр нь таны эрчмийг цэвэрлэх болно.
 📜 Төгсгөлийн үг
-Та бол жирийн нэгэн бус, гүнзгий увдистай сүнс юм. Таны замд саад болж буй зүйлс таны л шалгуур байсан. Одоо ухаанаа амрааж, зүрхээ нээвэл 2026 оны хувь заяаны бэлэг таныг хүлээж байна.`
+Та бол жирийн нэгэн бус, гүнзгий увдистай сүнс юм. Одоо ухаанаа амрааж, зүрхээ нээвэл [ИРЭЭДҮЙН_ОН_1] оны хувь заяаны бэлэг таныг хүлээж байна.`
   },
 
   NUMEROLOGY: {
@@ -233,10 +232,10 @@ function main() {
 
       let isRetry = false;
       if (status === "Боловсруулж байна...") {
-        const parsedDate = new Date(rawDate);
-        if (!isNaN(parsedDate.getTime())) {
+        // P2 FIX: Use Epoch (ms) directly for robust retry mechanism, instead of parsing string dates.
+        const startMs = Number(rawDate);
+        if (!isNaN(startMs) && startMs > 0) {
           const nowMs = new Date().getTime();
-          const startMs = parsedDate.getTime();
           const diffMinutes = (nowMs - startMs) / (1000 * 60);
 
           if (diffMinutes > 15) {
@@ -250,8 +249,9 @@ function main() {
       }
 
       statusCell.setValue("Боловсруулж байна...");
-      const startTime = new Date();
-      dateCell.setValue(Utilities.formatDate(startTime, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm"));
+      // Store Epoch timestamp for robust retry logic
+      const startTimeMs = new Date().getTime();
+      dateCell.setValue(startTimeMs);
       SpreadsheetApp.flush();
 
       try {
@@ -279,13 +279,13 @@ function main() {
         }
 
         const totalTokens = (profileData.parsingUsage || 0) + reportResult.usage;
-        const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+        const nowStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
 
         pdfCell.setValue(pdfData.url);
         statusCell.setValue("АМЖИЛТТАЙ");
         tokenCell.setValue(totalTokens);
         debugCell.setValue(JSON.stringify(profileData));
-        dateCell.setValue(now);
+        dateCell.setValue(nowStr); // Save readable date after success
         verCell.setValue(CONFIG.VERSION);
         errorCell.setValue("");
 
@@ -674,13 +674,21 @@ function generateSequentialReport(data, apiKey) {
   `;
   const r5 = callGeminiAPI(prompt5, apiKey, CONFIG.TEMPERATURE);
 
-  // P2 FIX: Verify that all 5 parts were generated successfully (Quality Gate)
+  // P2 FIX: Strict Quality Gate to ensure all 5 parts are present, no placeholders left, and length is adequate.
+  const fullText = r1.text.trim() + "\n\n" + r2.text.trim() + "\n\n" + r3.text.trim() + "\n\n" + r4.text.trim() + "\n\n" + r5.text.trim();
+
   if (r1.text.length < 300 || r2.text.length < 300 || r3.text.length < 300 || r4.text.length < 300 || r5.text.length < 300) {
       throw new Error("AI тайлангийн аль нэг хэсгийг хэт богино эсвэл хоосон гаргасан байна. Дахин оролдоно уу.");
   }
+  if (!fullText.includes("Нэгдүгээр бүлэг") || !fullText.includes("Хоёрдугаар бүлэг") || !fullText.includes("Тавдугаар бүлэг")) {
+      throw new Error("Тайлангийн бүлгүүдийн гарчиг эсвэл дараалал алдагдсан байна.");
+  }
+  if (fullText.includes("[") || fullText.includes("]")) {
+      throw new Error("AI тайлан дотор орлуулагч (Placeholder) текст үлдээсэн байна.");
+  }
 
   return {
-    text: r1.text.trim() + "\n\n" + r2.text.trim() + "\n\n" + r3.text.trim() + "\n\n" + r4.text.trim() + "\n\n" + r5.text.trim(),
+    text: fullText,
     usage: (r1.usage||0) + (r2.usage||0) + (r3.usage||0) + (r4.usage||0) + (r5.usage||0)
   };
 }
@@ -720,8 +728,9 @@ function callGeminiAPI(prompt, apiKey, temp, requireJson = false) {
         const json = JSON.parse(res.getContentText());
         if (json.candidates && json.candidates[0].content) {
             const finishReason = json.candidates[0].finishReason;
-            if (finishReason === 'MAX_TOKENS' || finishReason === 'SAFETY') {
-                throw new Error(`AI хариу дутуу тасарлаа (Шалтгаан: ${finishReason})`);
+            // P2 FIX: Treat any non-STOP finishReason as an error to prevent partial reports
+            if (finishReason !== 'STOP') {
+                throw new Error(`AI хариу дутуу тасарлаа эсвэл алдаа заалаа (Шалтгаан: ${finishReason})`);
             }
 
             return {
