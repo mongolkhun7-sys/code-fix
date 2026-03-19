@@ -234,9 +234,10 @@ function main() {
 
       let isRetry = false;
       if (status === "Боловсруулж байна...") {
-        if (rawDate instanceof Date) {
+        const parsedDate = new Date(rawDate);
+        if (!isNaN(parsedDate.getTime())) {
           const nowMs = new Date().getTime();
-          const startMs = rawDate.getTime();
+          const startMs = parsedDate.getTime();
           const diffMinutes = (nowMs - startMs) / (1000 * 60);
 
           if (diffMinutes > 15) {
@@ -402,16 +403,24 @@ function buildCompatibilityNumbers(lifePathNumber, missingNumbers) {
 
   const picks = [];
   if (missSet[6]) picks.push(6, 15, 24);
-  if (missSet[8]) picks.push(8, 17, 26);
+  // Remove 8, 17, 26 from compatibility picks to avoid contradiction with danger energies.
+  // if (missSet[8]) picks.push(8, 17, 26);
   if (lifePathNumber === 11 || lifePathNumber === 2) picks.push(2, 11, 20, 29);
   if (!picks.length) picks.push(2, 6, 11, 20, 24, 29);
 
+  const dangerDays = [8, 17, 26, 5, 14, 23, 7, 16, 25];
   const seen = {};
-  return picks.filter(x => {
+
+  const finalPicks = picks.filter(x => {
     if (seen[x]) return false;
+    if (dangerDays.includes(x)) return false; // Strict filter to avoid contradicting danger energies
     seen[x] = true;
     return true;
-  }).join(", ");
+  });
+
+  // Fallback if all picks were somehow danger days
+  if (!finalPicks.length) return "2, 6, 11, 20, 24, 29";
+  return finalPicks.join(", ");
 }
 
 function normalizeInputWithAI(raw, key) {
@@ -421,33 +430,45 @@ function normalizeInputWithAI(raw, key) {
 
   INSTRUCTIONS:
   1. Extract Gender (M/F). Return "Эрэгтэй" or "Эмэгтэй". Default "Эмэгтэй" if unknown.
-  2. Extract DOB (YYYY.MM.DD).
+  2. Extract DOB (YYYY.MM.DD). MUST be extracted correctly.
   3. Use "Name" if present, else "Эрхэм".
 
   RETURN JSON ONLY: {"gender": "Эрэгтэй", "dob": "YYYY.MM.DD", "name": "Name"}
   `;
+  let result;
   try {
-    const result = callGeminiAPI(prompt, key, 0.1, true);
-    const data = JSON.parse(result.text.trim());
-    if (!data.dob) throw new Error("No date");
-
-    let gender = "Эмэгтэй";
-    let rawG = (data.gender || "").toLowerCase();
-    if (rawG.includes("эр") || rawG === "male" || rawG === "man") gender = "Эрэгтэй";
-
-    return { ...data, gender: gender, usage: result.usage };
+    result = callGeminiAPI(prompt, key, 0.1, true);
   } catch (e) {
-    const dates = raw.match(/\d{4}[\.\-\s\/]\d{1,2}[\.\-\s\/]\d{1,2}/g) || ["1990.01.01"];
-    let fallbackGender = "Эмэгтэй";
-    if (raw.toLowerCase().includes("эр")) fallbackGender = "Эрэгтэй";
-
-    return {
-      dob: dates[0].replace(/[\s\-\/]/g, ".") || "1990.01.01",
-      gender: fallbackGender,
-      name: "Эрхэм",
-      usage: 0
-    };
+    throw new Error("Өгөгдлийг (Он сар өдөр) таних боломжгүй байна, зөвхөн огноо эсвэл хүйсийг тодорхой бичнэ үү.");
   }
+
+  let data = {};
+  try {
+    data = JSON.parse(result.text.trim());
+  } catch (e) {
+    // If Gemini fails to return valid JSON
+  }
+
+  // Fallback to regex if Gemini JSON failed, but NEVER fake the date.
+  if (!data.dob) {
+    const dates = String(raw).match(/\d{4}[\.\-\s\/]\d{1,2}[\.\-\s\/]\d{1,2}/g);
+    if (dates && dates.length > 0) {
+      data.dob = dates[0].replace(/[\s\-\/]/g, ".");
+    } else {
+      throw new Error("Өгөгдлийг (Он сар өдөр) таних боломжгүй байна, зөвхөн огноо эсвэл хүйсийг тодорхой бичнэ үү.");
+    }
+  }
+
+  let gender = "Эмэгтэй";
+  let rawG = (data.gender || String(raw)).toLowerCase();
+  if (rawG.includes("эр") || rawG === "male" || rawG === "man") gender = "Эрэгтэй";
+
+  return {
+    dob: data.dob,
+    gender: gender,
+    name: data.name || "Эрхэм",
+    usage: result.usage || 0
+  };
 }
 
 function parseAndCalculateProfile(rawInput, apiKey) {
@@ -528,6 +549,7 @@ function generateSequentialReport(data, apiKey) {
   3. MASSIVE LENGTH REQUIREMENT: You MUST expand deeply. Do not just summarize. Each requested concept must have its own long, rich paragraph diving into the past life impact, present situation, and future potential. Write AT LEAST 5-6 long paragraphs per part to make the report extremely detailed (12+ pages total).
   4. STRICT EMOJI RULE: EVERY SINGLE PARAGRAPH (except headers) MUST start with EXACTLY ONE emoji. ZERO exceptions.
   5. STRICT FORMATTING: NO Markdown headers (#), NO Markdown bold (**text**). Return ONLY PLAIN TEXT.
+  6. DO NOT CUT OFF: You must end with a complete sentence. Never leave the final sentence unfinished.
   `;
 
   // 1st CALL: Foundation
@@ -658,6 +680,11 @@ function callGeminiAPI(prompt, apiKey, temp, requireJson = false) {
     try {
         const json = JSON.parse(res.getContentText());
         if (json.candidates && json.candidates[0].content) {
+            const finishReason = json.candidates[0].finishReason;
+            if (finishReason === 'MAX_TOKENS' || finishReason === 'SAFETY') {
+                throw new Error(`AI хариу дутуу тасарлаа (Шалтгаан: ${finishReason})`);
+            }
+
             return {
                 text: json.candidates[0].content.parts[0].text,
                 usage: json.usageMetadata ? json.usageMetadata.totalTokenCount : 0
